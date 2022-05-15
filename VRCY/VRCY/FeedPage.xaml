@@ -1,0 +1,394 @@
+﻿<Page
+    x:Class="VRCY.FeedPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:VRCY"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+    xmlns:model="using:VRChat.API.Model" 
+    xmlns:ctrl="using:Microsoft.UI.Xaml.Controls"
+    xmlns:json="using:VRCY.JSON" xmlns:controls="using:Microsoft.Toolkit.Uwp.UI.Controls"
+    mc:Ignorable="d"
+    Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="90*"/>
+            <ColumnDefinition Width="30*"/>
+        </Grid.ColumnDefinitions>
+
+        <Grid Background="#222222"
+              Grid.Column="0">
+            <CommandBar HorizontalAlignment="Left"
+                        OverflowButtonVisibility="Collapsed">
+                <AppBarButton Icon="Calendar" Label="Sort by Calendar"
+                              Command="{x:Bind ViewModel.OfflineHeaderClick}"
+                              Margin="40,0,40,0"/>
+                <AppBarSeparator/>
+                <AppBarButton Icon="ViewAll" Label="Sort by Type"
+                              Margin="15,0,15,0"/>
+                <AppBarSeparator/>
+                <AppBarButton Icon="Contact" Label="Sort by User"
+                              Margin="30,0,30,0"/>
+                <AppBarSeparator/>
+                <AppBarButton IsEnabled="False" 
+                              Icon="List"
+                              Margin="30,0,30,0"/>
+
+            </CommandBar>
+            <ScrollViewer Margin="0,50,0,0">
+                <ListView x:Name="EventsList"
+                          IsItemClickEnabled="True"
+                          SelectionMode="None"
+                          ItemsSource="{x:Bind ViewModel.Events}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="json:MessageJson">
+                            <Grid>
+                                <TextBlock Text="{x:Bind time}"/>
+                                <TextBlock Text="{x:Bind type}" 
+                                       Margin="150,0,0,0"/>
+                                <TextBlock Text="{x:Bind displayName}" 
+                                       Margin="250,0,0,0"/>
+                                <TextBlock Text="{x:Bind detail}"
+                                       TextTrimming="CharacterEllipsis"
+                                       Margin="400,0,0,0"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </ScrollViewer>
+        </Grid>
+        <Grid Background="#171717"
+              Grid.Column="1">
+            <TextBox VerticalAlignment="Top"
+                     x:Name="SearchTextBox"
+                     KeyDown="SearchBox_KeyDown"
+                     Margin="10"/>
+            <ScrollViewer Margin="0,50,0,20"
+                          Visibility="{x:Bind ViewModel.SearchListViewVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <ListView ItemsSource="{x:Bind ViewModel.SearchUsers}"
+                          IsItemClickEnabled="True"
+                          SelectionMode="None"
+                          ItemClick="ListView_ItemClick"
+                          >
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="model:LimitedUser">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="50"/>
+                                    <ColumnDefinition Width="50*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{x:Bind CurrentAvatarThumbnailImageUrl}"
+                                                        Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
+                                <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                    <Border.Background>
+                                        <ImageBrush ImageSource="{x:Bind ProfilePicOverride}"
+                                                        Stretch="UniformToFill"/>
+                                    </Border.Background>
+                                </Border>
+                                <StackPanel Grid.Column="1"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="0,-5,0,0">
+                                    <TextBlock Text="{x:Bind DisplayName}"
+                                                   FontWeight="SemiBold"/>
+                                    <TextBlock Text="{x:Bind StatusDescription}"/>
+                                </StackPanel>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </ScrollViewer>
+            <ScrollViewer Margin="0,50,0,20"
+                          Visibility="{x:Bind ViewModel.AllUsersViewVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                <StackPanel Margin="0,10,0,0">
+                    
+                    <HyperlinkButton x:Name="OnlineHeader" 
+                                     Command="{x:Bind ViewModel.OnlineHeaderClick}"
+                                     Foreground="White">
+                        Online
+                    </HyperlinkButton>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.OnlineUsers}"
+                              IsItemClickEnabled="True"
+                              SelectionMode="None"
+                              ItemClick="ListView_ItemClick"
+                              Visibility="{x:Bind ViewModel.OnlineListViewVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="model:LimitedUser">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50"/>
+                                        <ColumnDefinition Width="50*"/>
+                                    </Grid.ColumnDefinitions>
+                                    <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{x:Bind CurrentAvatarThumbnailImageUrl}"
+                                                        Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{x:Bind ProfilePicOverride}"
+                                                        Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <StackPanel Grid.Column="1"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="0,-5,0,0">
+                                        <TextBlock Text="{x:Bind DisplayName}"
+                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="{x:Bind StatusDescription}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <HyperlinkButton x:Name="ActiveHeader" 
+                                     Command="{x:Bind ViewModel.ActiveHeaderClick}"
+                                     Foreground="White">
+                        Active
+                    </HyperlinkButton>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.ActiveUsers}"
+                              IsItemClickEnabled="True"
+                              SelectionMode="None"
+                              ItemClick="ListView_ItemClick"
+                              Visibility="{x:Bind ViewModel.ActiveListViewVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="model:LimitedUser">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50"/>
+                                        <ColumnDefinition Width="50*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{x:Bind CurrentAvatarImageUrl}"
+                                                        Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{x:Bind ProfilePicOverride}"
+                                                        Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <StackPanel Grid.Column="1"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="0,-5,0,0">
+                                        <TextBlock Text="{x:Bind DisplayName}"
+                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="{x:Bind StatusDescription}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                    <HyperlinkButton x:Name="OfflineHeader" 
+                                     Command="{x:Bind ViewModel.OfflineHeaderClick}"
+                                     Foreground="White">
+                        Offline
+                    </HyperlinkButton>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.OfflineUsers}"
+                              IsItemClickEnabled="True"
+                              SelectionMode="None"
+                              ItemClick="ListView_ItemClick"
+                              Visibility="{x:Bind ViewModel.OfflineListViewVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="model:LimitedUser">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="50"/>
+                                        <ColumnDefinition Width="50*"/>
+                                    </Grid.ColumnDefinitions>
+
+                                    <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{x:Bind CurrentAvatarImageUrl}"
+                                                        Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <Border Width="50"
+                                            Height="50"
+                                            CornerRadius="50"
+                                            Margin="-7,10,0,10"
+                                            HorizontalAlignment="Left">
+                                        <Border.Background>
+                                            <ImageBrush ImageSource="{x:Bind ProfilePicOverride}"
+                                                        Stretch="UniformToFill"/>
+                                        </Border.Background>
+                                    </Border>
+                                    <StackPanel Grid.Column="1"
+                                                HorizontalAlignment="Left"
+                                                VerticalAlignment="Center"
+                                                Margin="0,-5,0,0">
+                                        <TextBlock Text="{x:Bind DisplayName}"
+                                                   FontWeight="SemiBold"/>
+                                        <TextBlock Text="{x:Bind StatusDescription}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
+
+        <Grid Grid.ColumnSpan="2"
+              Visibility="{x:Bind ViewModel.UserPopoutVisibility, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}">
+            <Grid.Background>
+                <AcrylicBrush TintColor="{ThemeResource SystemAltMediumColor}"
+                              TintOpacity="0.6"
+                              Opacity="0.9"/>
+            </Grid.Background>
+
+            <Grid CornerRadius="10"
+                  Margin="150"
+                  Background="{ThemeResource SystemChromeAltHighColor}">
+                <Button x:Name="CloseButton"
+                        Margin="10"
+                        Canvas.ZIndex="10"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Command="{x:Bind ViewModel.UserVisibilityClick}">
+                    <SymbolIcon Symbol="Cancel"/>
+                </Button>
+
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="auto"/>
+                        <ColumnDefinition Width="90*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="auto"/>
+                        <RowDefinition Height="90*"/>
+                    </Grid.RowDefinitions>
+                    <controls:ImageEx CornerRadius="10,10,10,10"
+                                      Stretch="UniformToFill"
+                                      Width="250"
+                                      Margin="10"
+                                      VerticalAlignment="Center"
+                                      IsCacheEnabled="False"
+                                      Height="150"
+                                      Source="{x:Bind ViewModel.SelectedUser.CurrentAvatarImageUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <controls:ImageEx CornerRadius="10,10,10,10"
+                                      Stretch="UniformToFill"
+                                      IsCacheEnabled="False"
+                                      Margin="10"
+                                      VerticalAlignment="Center"
+                                      Width="250"
+                                      Height="150"
+                                      Source="{x:Bind ViewModel.SelectedUser.ProfilePicOverride, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                    <StackPanel Orientation="Horizontal"
+                                Grid.Column="1">
+                        <TextBlock Text="{x:Bind ViewModel.SelectedUser.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   FontSize="24"
+                                   Margin="10"/>
+                        <TextBlock Text="{x:Bind ViewModel.SelectedUser.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   Foreground="LightGray"
+                                   FontSize="15"
+                                   Margin="0,18,0,0"/>
+                    </StackPanel>
+                    <TextBlock Text="{x:Bind ViewModel.SelectedUser.StatusDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                               Grid.Column="1"
+                               Margin="10,50,0,0"
+                               FontSize="18"/>
+                    <ScrollViewer Grid.Row="1" 
+                                  Margin="0,0,0,150"
+                                  Grid.ColumnSpan="2">
+                        <TextBlock Text="{x:Bind ViewModel.SelectedUser.Bio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                   TextWrapping="Wrap"
+                                   Margin="10"
+                                   FontSize="16"/>
+                    </ScrollViewer>
+
+                    <Grid VerticalAlignment="Bottom"
+                          Grid.ColumnSpan="2"
+                          Grid.Row="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                            <ColumnDefinition/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Column="0"
+                                    Grid.Row="0"
+                                    Margin="10,0,0,10">
+                            <TextBlock Text="Last Seen"/>
+                            <TextBlock Text="-" Foreground="LightGray"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="0"
+                                    Grid.Row="1"
+                                    Margin="10,0,0,10">
+                            <TextBlock Text="Last Login"/>
+                            <TextBlock Text="{x:Bind ViewModel.SelectedUser.LastLogin, Mode=OneWay}" Foreground="LightGray"/>
+                        </StackPanel>
+                        
+                        <StackPanel Grid.Column="1"
+                                    Grid.Row="0"
+                                    Margin="10,0,0,10">
+                            <TextBlock Text="Avatar Cloning"/>
+                            <TextBlock Text="{x:Bind ViewModel.SelectedUser.AllowAvatarCopying, Mode=OneWay}" Foreground="LightGray"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Column="1"
+                                    Grid.Row="1"
+                                    Margin="10,0,0,10">
+                            <TextBlock Text="Date Joined"/>
+                            <TextBlock Text="{x:Bind ViewModel.SelectedUser.DateJoined, Mode=OneWay}" Foreground="LightGray"/>
+                        </StackPanel>
+
+                        
+                    </Grid>
+                    
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
+</Page>
