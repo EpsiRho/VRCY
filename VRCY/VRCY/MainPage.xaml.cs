@@ -9,11 +9,13 @@ using VRCY.Views;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage;
+using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Markup;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
@@ -28,12 +30,17 @@ namespace VRCY
     {
         public MainPage()
         {
+            
             this.InitializeComponent();
             try
             {
                 ApplicationDataContainer localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
                 UsernameEntry.Text = localSettings.Values["username"] as string;
                 PasswordEntry.Password = localSettings.Values["password"] as string;
+                if (UsernameEntry.Text != "" && PasswordEntry.Password != "")
+                {
+                    Login();
+                }
             }
             catch (Exception ex)
             {
@@ -64,6 +71,11 @@ namespace VRCY
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
         {
+            Login();
+        }
+
+        private async void Login()
+        {
             LoginProgress.Visibility = Visibility.Visible;
             new Thread(async () =>
             {
@@ -83,16 +95,13 @@ namespace VRCY
 
                 var check = await VRChatHandler.Init(username, password, tfa);
 
-                await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                {
-                    LoginProgress.Visibility = Visibility.Collapsed;
-                });
                 Thread t = new Thread(VRChatHandler.EventListen);
                 t.Start();
                 if (check)
                 {
                     await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                     {
+                        LoginProgress.Visibility = Visibility.Collapsed;
                         LoginGrid.Visibility = Visibility.Collapsed;
                         MainNav.SelectedItem = FeedItem;
                         ContentFrame.Navigate(typeof(FeedPage));

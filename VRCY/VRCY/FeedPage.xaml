@@ -19,6 +19,13 @@
 
         <Grid Background="#222222"
               Grid.Column="0">
+            <Grid Height="32" VerticalAlignment="Top"
+                  Margin="10,7,10,10"
+                  HorizontalAlignment="Right">
+                <Ellipse x:Name="OuterEllipse" Fill="{x:Bind ViewModel.HeartBrush, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Height="20" Stroke="{ThemeResource RadioButtonOuterEllipseStroke}" StrokeThickness="{ThemeResource RadioButtonBorderThemeThickness}" UseLayoutRounding="False" Width="20"/>
+                <Ellipse x:Name="CheckGlyph" Fill="{ThemeResource RadioButtonCheckGlyphFill}" Height="10" Opacity="0" Stroke="{ThemeResource RadioButtonCheckGlyphStroke}" UseLayoutRounding="False" Width="10"/>
+            </Grid>
+
             <CommandBar HorizontalAlignment="Left"
                         OverflowButtonVisibility="Collapsed">
                 <AppBarButton Icon="Calendar" Label="Sort by Calendar"
@@ -57,6 +64,7 @@
                     </ListView.ItemTemplate>
                 </ListView>
             </ScrollViewer>
+            
         </Grid>
         <Grid Background="#171717"
               Grid.Column="1">
@@ -303,15 +311,14 @@
                         <RowDefinition Height="auto"/>
                         <RowDefinition Height="90*"/>
                     </Grid.RowDefinitions>
-                    <controls:ImageEx CornerRadius="10,10,10,10"
+                    <controls:ImageEx CornerRadius="2"
                                       Stretch="UniformToFill"
                                       Width="250"
-                                      Margin="10"
                                       VerticalAlignment="Center"
                                       IsCacheEnabled="False"
                                       Height="150"
                                       Source="{x:Bind ViewModel.SelectedUser.CurrentAvatarImageUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
-                    <controls:ImageEx CornerRadius="10,10,10,10"
+                    <controls:ImageEx CornerRadius="2"
                                       Stretch="UniformToFill"
                                       IsCacheEnabled="False"
                                       Margin="10"
@@ -323,6 +330,7 @@
                                 Grid.Column="1">
                         <TextBlock Text="{x:Bind ViewModel.SelectedUser.DisplayName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    FontSize="24"
+                                   FontWeight="SemiBold"
                                    Margin="10"/>
                         <TextBlock Text="{x:Bind ViewModel.SelectedUser.Username, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    Foreground="LightGray"
@@ -332,14 +340,39 @@
                     <TextBlock Text="{x:Bind ViewModel.SelectedUser.StatusDescription, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                Grid.Column="1"
                                Margin="10,50,0,0"
-                               FontSize="18"/>
-                    <ScrollViewer Grid.Row="1" 
-                                  Margin="0,0,0,150"
+                               FontSize="19"/>
+
+                    <Button Grid.Column="0" 
+                            Grid.Row="1"
+                            Padding="1"
+                            Margin="10,0,0,0"
+                            Width="250"
+                            Height="150"
+                            VerticalAlignment="Top">
+                        <Grid>
+                            <controls:ImageEx Stretch="UniformToFill"
+                                              Width="250"
+                                              Opacity="0.3"
+                                              VerticalAlignment="Center"
+                                              IsCacheEnabled="False"
+                                              Height="150"
+                                              Source="{x:Bind ViewModel.WorldUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+
+                            <TextBlock FontSize="18"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Text="{x:Bind ViewModel.WorldName, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </Grid>
+                    </Button>
+
+                    <ScrollViewer Grid.Row="0" 
+                                  Grid.RowSpan="2"
+                                  Margin="270,80,0,100"
                                   Grid.ColumnSpan="2">
                         <TextBlock Text="{x:Bind ViewModel.SelectedUser.Bio, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                                    TextWrapping="Wrap"
                                    Margin="10"
-                                   FontSize="16"/>
+                                   FontSize="14"/>
                     </ScrollViewer>
 
                     <Grid VerticalAlignment="Bottom"

@@ -79,8 +79,8 @@ namespace VRCY.JSON
         public int favorites { get; set; }
         public DateTime created_at { get; set; }
         public DateTime updated_at { get; set; }
-        public DateTime publicationDate { get; set; }
-        public DateTime labsPublicationDate { get; set; }
+        public string publicationDate { get; set; }
+        public string labsPublicationDate { get; set; }
         public int visits { get; set; }
         public int popularity { get; set; }
         public int heat { get; set; }

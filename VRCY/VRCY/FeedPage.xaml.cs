@@ -11,11 +11,13 @@ using VRCY.JSON;
 using VRCY.ViewModels;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
+using Windows.UI;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
+using Windows.UI.Xaml.Markup;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Navigation;
 
@@ -32,6 +34,8 @@ namespace VRCY
         FeedPageViewModel ViewModel = new FeedPageViewModel();
         public FeedPage()
         {
+            var color = (Color)XamlBindingHelper.ConvertValue(typeof(Color), "Purple");
+            ViewModel.HeartBrush = new SolidColorBrush(color);
             this.InitializeComponent();
             ViewModel.Dispatcher = this.Dispatcher;
             Thread t = new Thread(ViewModel.OnLoad);
@@ -46,10 +50,49 @@ namespace VRCY
             ViewModel.LoopForEvents = false;
         }
 
-        private void ListView_ItemClick(object sender, ItemClickEventArgs e)
+        private async void ListView_ItemClick(object sender, ItemClickEventArgs e)
         {
             LimitedUser lu = e.ClickedItem as LimitedUser;
-            ViewModel.SelectedUser = VRChatHandler.GetFullUser(lu.Id);
+            try
+            {
+                var usr = VRChatHandler.GetFullUser(lu.Id);
+                await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                {
+                    ViewModel.SelectedUser = usr;
+                });
+                if (ViewModel.SelectedUser.WorldId != "private")
+                {
+                    var wrld = await VRChatHandler.GetWorldInfo(ViewModel.SelectedUser.WorldId);
+                    await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                    {
+                        ViewModel.SelectedWorld = wrld;
+                        ViewModel.WorldName = ViewModel.SelectedWorld.Name;
+                        ViewModel.WorldUrl = ViewModel.SelectedWorld.ThumbnailImageUrl;
+                    });
+                }
+                else
+                {
+                    if (ViewModel.SelectedWorld != null)
+                    {
+                        await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                        {
+                            ViewModel.WorldName = "Private";
+                            ViewModel.WorldUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Transparent_square.svg/1024px-Transparent_square.svg.png";
+                        });
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                if(ViewModel.SelectedWorld != null)
+                {
+                    await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                    {
+                        ViewModel.WorldName = "Private";
+                        ViewModel.WorldUrl = "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Transparent_square.svg/1024px-Transparent_square.svg.png";
+                    });
+                }
+            }
             ViewModel.UserVisibilityClick.Execute(null);
 
         }

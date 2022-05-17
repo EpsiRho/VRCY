@@ -11,8 +11,11 @@ using System.Windows.Input;
 using VRChat.API.Model;
 using VRCY.Classes;
 using VRCY.JSON;
+using Windows.UI;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
+using Windows.UI.Xaml.Markup;
+using Windows.UI.Xaml.Media;
 
 namespace VRCY.ViewModels
 {
@@ -97,6 +100,38 @@ namespace VRCY.ViewModels
             set=> SetProperty(ref _SelectedUser, value);
         }
 
+        private VRChat.API.Model.World _SelectedWorld;
+        public VRChat.API.Model.World SelectedWorld
+        {
+            get => _SelectedWorld;
+            set => SetProperty(ref _SelectedWorld, value);
+        }
+        private string _WorldName;
+        public string WorldName
+        {
+            get => _WorldName;
+            set => SetProperty(ref _WorldName, value);
+        }
+        private string _WorldUrl;
+        public string WorldUrl
+        {
+            get => _WorldUrl;
+            set => SetProperty(ref _WorldUrl, value);
+        }
+        private Brush _HeartBrush;
+        public Brush HeartBrush
+        {
+            get => _HeartBrush;
+            set => SetProperty(ref _HeartBrush, value);
+        }
+
+        private VRChat.API.Model.Avatar _SelectedAvatar;
+        public VRChat.API.Model.Avatar SelectedAvatar
+        {
+            get => _SelectedAvatar;
+            set => SetProperty(ref _SelectedAvatar, value);
+        }
+
         // Funcs
         private void ChangeOnlineVisibility()
         {
@@ -149,6 +184,19 @@ namespace VRCY.ViewModels
         {
             while (LoopForEvents)
             {
+                try
+                {
+                    await this.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                    {
+                        var color = (Color)XamlBindingHelper.ConvertValue(typeof(Color), VRChatHandler.Color);
+                        HeartBrush = new SolidColorBrush(color);
+                    });
+                }
+                catch (Exception ex)
+                {
+
+                }
+
                 foreach (var ev in VRChatHandler.Pipeline)
                 {
                     if (!Events.Contains(ev))
@@ -233,12 +281,20 @@ namespace VRCY.ViewModels
         {
             try
             {
+                //var info = await VRChatHandler.SystemsApi.GetInfoPushAsync(include:"quick-menu-banner");
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    var color = (Color)XamlBindingHelper.ConvertValue(typeof(Color), "Purple");
+                    HeartBrush = new SolidColorBrush(color);
+                });
+
                 foreach (var ev in VRChatHandler.Pipeline)
                 {
                     Events.Add(ev);
                 }
 
                 var friends = VRChatHandler.GetFriends(false);
+                friends = friends.OrderBy(i => i.DisplayName).ToList();
                 foreach (var friend in friends)
                 {
                     if (friend.ProfilePicOverride == "")
@@ -251,10 +307,41 @@ namespace VRCY.ViewModels
                     }
                     if (friend.Status == UserStatus.Active)
                     {
-                        await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                        if (friend.Location == "private" || friend.Location == "") 
+                        { 
+                            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                            {
+                                ActiveUsers.Add(friend);
+                            });
+                        }
+                        else
                         {
-                            ActiveUsers.Add(friend);
-                        });
+                            await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                            {
+                                OnlineUsers.Add(friend);
+                            });
+                        }
+                    }
+                    else if(friend.Status == UserStatus.Busy || friend.Status == UserStatus.AskMe)
+                    {
+                        VRChat.API.Model.User user = VRChatHandler.GetFullUser(friend.Id);
+                        if(user != null)
+                        {
+                            if(user.State == UserState.Active)
+                            {
+                                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                                {
+                                    ActiveUsers.Add(friend);
+                                });
+                            }
+                            else
+                            {
+                                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Low, () =>
+                                {
+                                    OnlineUsers.Add(friend);
+                                });
+                            }
+                        }
                     }
                     else
                     {
@@ -267,6 +354,7 @@ namespace VRCY.ViewModels
                 }
 
                 var oFriends = VRChatHandler.GetFriends(true);
+                oFriends = oFriends.OrderBy(i => i.DisplayName).ToList();
                 await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
                 {
                     OfflineUsers.Clear();

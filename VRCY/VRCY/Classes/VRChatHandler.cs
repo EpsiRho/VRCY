@@ -12,6 +12,7 @@ using System.Net.WebSockets;
 using Websocket.Client;
 using Newtonsoft.Json;
 using Windows.Storage;
+using Windows.UI.Xaml.Shapes;
 
 namespace VRCY.Classes
 {
@@ -24,11 +25,16 @@ namespace VRCY.Classes
         public static FriendsApi FriendApi { get; set; }
         public static AvatarsApi AvatarApi { get; set; }
         public static WorldsApi WorldApi { get; set; }
+        public static SystemApi SystemsApi { get; set; }
         private static string AuthKey { get; set; }
         public static string LastError { get; set; }
+        public static bool IsLoggedIn { get; set; }
+        public static bool AuthFail { get; set; }
+        public static string Color { get; set; }
         public static async Task<bool> Init(string user, string pass, string tfa = "")
         {
-            // Authentication credentials
+            IsLoggedIn = false;
+            AuthFail = false;
             ApplicationDataContainer localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
            
             var Config = new Configuration();
@@ -36,6 +42,13 @@ namespace VRCY.Classes
             Config.Password = pass;
             Config.AddApiKey("auth", localSettings.Values["authcookie"] as string);
             Config.AddApiKey("twoFactorAuth", localSettings.Values["tfaauthcookie"] as string);
+            Config.UserAgent = "VRCY/v1.0 (By EpsilonRho)";
+
+            SystemsApi = new SystemApi(Config);
+            APIConfig conf = SystemsApi.GetConfig();
+            Config.AddApiKey("apiKey", conf.ClientApiKey);
+            SystemsApi = new SystemApi(Config);
+
             AuthApi = new AuthenticationApi(Config);
             UserApi = new UsersApi(Config);
             FriendApi = new FriendsApi(Config);
@@ -44,7 +57,7 @@ namespace VRCY.Classes
             try
             {
                 var result = AuthApi.GetCurrentUserWithHttpInfo();
-                AuthKey = result.Cookies.First().Value;
+                AuthKey = result.Cookies.Last(o => o.Name == "auth").Value;
                 CUser = result.Content as CurrentUser;
                 if (CUser == null)
                 {
@@ -55,9 +68,9 @@ namespace VRCY.Classes
                         LastError = "2FA Invalid or on timeout";
                         return false;
                     }
-                    localSettings.Values["tfaauthcookie"] = res.Cookies[1].Value;
+                    localSettings.Values["tfaauthcookie"] = res.Cookies.Last(o => o.Name == "twoFactorAuth").Value;
                 }
-                localSettings.Values["authcookie"] = result.Cookies[0].Value;
+                localSettings.Values["authcookie"] = AuthKey;
 
                 // Try and get the current user, if not check if 2fa is needed
                 CUser = await AuthApi.GetCurrentUserAsync();
@@ -91,6 +104,11 @@ namespace VRCY.Classes
         public static async Task<List<LimitedWorld>> SearchWorlds(string search)
         {
             return WorldApi.SearchWorlds(search:search);
+        }
+
+        public static async Task<VRChat.API.Model.World> GetWorldInfo(string search)
+        {
+            return WorldApi.GetWorld(search);
         }
 
 
@@ -128,6 +146,7 @@ namespace VRCY.Classes
         {
             try
             {
+                AuthFail = false;
                 var exitEvent = new ManualResetEvent(false);
                 var url = new Uri($"wss://pipeline.vrchat.cloud/?authToken={AuthKey}");
 
@@ -157,10 +176,44 @@ namespace VRCY.Classes
                     client.ReconnectionHappened.Subscribe(info =>
                         Console.WriteLine($"[+] Reconnection happened, type: {info.Type}"));
 
+                    client.DisconnectionHappened.Subscribe(async msg =>
+                    {
+                        if(msg.Type == DisconnectionType.NoMessageReceived)
+                        {
+                            Color = "Blue";
+                        }
+                        else
+                        {
+                            Color = "Red";
+                        }
+                    });
+
+                    client.ReconnectionHappened.Subscribe(async msg =>
+                    {
+                        Color = "Green";
+                    });
+
                     client.MessageReceived.Subscribe(async msg => {
 
                         try
                         {
+                            if (msg.Text.Contains("authToken doesn't correspond with an active session"))
+                            {
+                                ApplicationDataContainer localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+                                var result = AuthApi.GetCurrentUserWithHttpInfo();
+                                AuthKey = result.Cookies.Last(o => o.Name == "auth").Value;
+                                localSettings.Values["authcookie"] = AuthKey;
+                                IsLoggedIn = false;
+                                AuthFail = true;
+                                await client.Stop(WebSocketCloseStatus.NormalClosure, "bad");
+                                client.Url = new Uri($"wss://pipeline.vrchat.cloud/?authToken={AuthKey}");
+                                await client.Start();
+                                Color = "Red";
+                                return;
+                            }
+                            IsLoggedIn = true;
+
+                            Color = "Green";
                             MessageJson mJson = JsonConvert.DeserializeObject<MessageJson>(msg.Text);
                             Console.WriteLine($"[~] Message received: {mJson.type}");
 
@@ -210,7 +263,7 @@ namespace VRCY.Classes
                                 Pipeline.Add(mJson);
                             }
                         }
-                        catch (Exception)
+                        catch (Exception e)
                         {
                             Console.WriteLine($"[!] Deserialization err");
                         }
